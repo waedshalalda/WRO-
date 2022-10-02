@@ -1,0 +1,61 @@
+import sensor , lcd
+import time
+from WePort import *
+from WeUltrasonicSensor import *
+from WeDCMotor import *
+from WeServo import *
+lcd.init(freq=15000000,color=0x0000)
+sensor.reset()
+sensor.set_pixformat(sensor.RGB565)
+sensor.set_framesize(sensor.QVGA)
+sensor.run(1)
+sensor.skip_frames(10)
+sensor.set_auto_gain(False)
+sensor.set_auto_whitebal(False)
+lcd.rotation(2)
+servo_13 = WeServo(13, 0)
+colorsensor="non"
+countorange=0
+countblue=0
+dc_1 = WeDCMotor(1)
+ultrasonic_A = WeUltrasonicSensor(PORT_A)
+ultrasonic_B = WeUltrasonicSensor(PORT_B)
+
+while True:
+   dc_1.run(-50)
+   _img = sensor.snapshot()
+   _blobs = _img.find_blobs([(40,60,60,90,50,70)], roi=(0,0,320,240),area_threshold=10, pixels_threshold=100,
+   merge=False, margin=0)
+   _blobs2 = _img.find_blobs([(0,20,-10,30,-60,10)], roi=(0,0,320,240),area_threshold=10, pixels_threshold=100,
+   merge=False, margin=0)
+   if _blobs:
+       while(countorange<12):
+           _b = _blobs[0]
+           _img.draw_rectangle(_b.rect(),(255,255,255), thickness=1, fill=False)
+           _img.draw_cross((_b.cx(),_b.cy()), (255,255,255),5,1)
+           colorsensor="red"
+           countorange+=1
+            print(colorsensor)
+            if  ultrasonic_A.distanceCM()  >50:
+                 servo_13.write_angle(90)
+                 dc_1.run(-20)
+                 time.sleep(2)
+                 servo_13.write_angle(0)
+
+       dc_1.run(-50)
+       dc_1.run(0)
+   if _blobs2:
+       while(countblue<12):
+           _b2 = _blobs2[0]
+           _img.draw_rectangle(_b2.rect(),(255,255,255), thickness=1, fill=False)
+           _img.draw_cross((_b2.cx(),_b2.cy()), (255,255,255),5,1)
+           colorsensor="blue"
+           print(colorsensor)
+           if  ultrasonic_B.distanceCM()  >50:
+               servo_13.write_angle(-90)
+               dc_1.run(-20)
+               time.sleep(2)
+               servo_13.write_angle(0)
+
+        dc_1.run(-50)
+        dc_1.run(0)
